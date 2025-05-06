@@ -1,0 +1,12 @@
+[project]
+name = "fhir-analytics-pathling"
+dynamic = ["version"]
+
+dependencies = [
+    "pathling==7.2.0",
+]
+
+[tool.setuptools.packages.find]
+where = [
+    ""
+]
