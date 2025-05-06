@@ -17,4 +17,4 @@ USER $NB_UID
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-COPY . .
+COPY --chown=${NB_UID}:${NB_GID} . .
