@@ -19,7 +19,7 @@ Install the Jupyter notebook server, `jupyterlab` as follows:
     python3 -m pip install --user jupyterlab
 
 #### Notebook Dependencies
-Install pathling as follows
+Each notebook may have its own dependencies, but at the moment all require `pathling` to analyze FHIR data. Install `pathling` as follows
 
     python3 -m pip install --user pathling
 
