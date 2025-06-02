@@ -1,3 +1,4 @@
+import argparse
 import csv
 import json
 from fhirpathpy import evaluate
@@ -155,27 +156,38 @@ class QuestionnaireResponse():
         return rows
 
 
-for resource_type in (MedicationRequest, Patient, Procedure, Questionnaire, QuestionnaireResponse):
-    print(f"Processing {resource_type.resource_type}...")
-    rows = []
-    with open(f"{input_path}/{resource_type.resource_type}.ndjson", "r", encoding="utf-8") as f:
-        for line in f:
-            data = json.loads(line)
+def main():
+    parser = argparse.ArgumentParser(description="Generate CSV from exported FHIR resource files in NDJSON format")
+    parser.add_argument("-i", "--input_directory", help="Directory containing NDJSON source files", default=input_path)
+    parser.add_argument("-o", "--output_directory", help="Destination directory for generated CSV output files", default=output)
 
-            if hasattr(resource_type, 'normalize'):
-                data = resource_type.normalize(data)
+    args = parser.parse_args()
 
-            results = resource_type.csv_data(data)
-            # Some types return multiple rows, i.e. QuestionnaireResponse
-            if isinstance(results, list):
-                for row in results:
-                    rows.append(row)
-            else:
-                rows.append(results)
+    for resource_type in (MedicationRequest, Patient, Procedure, Questionnaire, QuestionnaireResponse):
+        print(f"Processing {resource_type.resource_type}...")
+        rows = []
+        with open(f"{args.input_directory}/{resource_type.resource_type}.ndjson", "r", encoding="utf-8") as f:
+            for line in f:
+                data = json.loads(line)
 
-    with open(f"{output}/{resource_type.resource_type}.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=resource_type.csv_headers())
-        writer.writeheader()
-        writer.writerows(rows)
+                if hasattr(resource_type, 'normalize'):
+                    data = resource_type.normalize(data)
 
-print(f"Process complete, see {output} directory")
+                results = resource_type.csv_data(data)
+                # Some types return multiple rows, i.e. QuestionnaireResponse
+                if isinstance(results, list):
+                    for row in results:
+                        rows.append(row)
+                else:
+                    rows.append(results)
+
+        with open(f"{args.output_directory}/{resource_type.resource_type}.csv", "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=resource_type.csv_headers())
+            writer.writeheader()
+            writer.writerows(rows)
+
+    print(f"Process complete, see {args.output_directory} directory")
+
+
+if __name__ == "__main__":
+    main()
