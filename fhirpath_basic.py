@@ -1,6 +1,8 @@
 import argparse
 import csv
+import glob
 import json
+import os
 from fhirpathpy import evaluate
 from typing import ClassVar 
 
@@ -166,20 +168,26 @@ def main():
     for resource_type in (MedicationRequest, Patient, Procedure, Questionnaire, QuestionnaireResponse):
         print(f"Processing {resource_type.resource_type}...")
         rows = []
-        with open(f"{args.input_directory}/{resource_type.resource_type}.ndjson", "r", encoding="utf-8") as f:
-            for line in f:
-                data = json.loads(line)
+        pattern = os.path.join(
+            args.input_directory,
+            "**",
+            f"*{resource_type.resource_type}.ndjson")
+        for filename in glob.glob(pattern, recursive=True):
+            print(f"  processing {filename}...")
+            with open(filename, "r", encoding="utf-8") as f:
+                for line in f:
+                    data = json.loads(line)
 
-                if hasattr(resource_type, 'normalize'):
-                    data = resource_type.normalize(data)
+                    if hasattr(resource_type, 'normalize'):
+                        data = resource_type.normalize(data)
 
-                results = resource_type.csv_data(data)
-                # Some types return multiple rows, i.e. QuestionnaireResponse
-                if isinstance(results, list):
-                    for row in results:
-                        rows.append(row)
-                else:
-                    rows.append(results)
+                    results = resource_type.csv_data(data)
+                    # Some types return multiple rows
+                    if isinstance(results, list):
+                        for row in results:
+                            rows.append(row)
+                    else:
+                        rows.append(results)
 
         with open(f"{args.output_directory}/{resource_type.resource_type}.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=resource_type.csv_headers())
